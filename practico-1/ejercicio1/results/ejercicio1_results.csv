@@ -1,0 +1,13 @@
+tipo,tiempo_segundos
+secuencial_fria,0.191777
+aleatorio_fria,0.475792
+secuencial_caliente,0.034842
+aleatorio_caliente,0.471346
+stride_1_caliente,0.072012
+stride_16_caliente,0.067523
+stride_64_caliente,0.159328
+stride_128_caliente,0.578401
+stride_256_caliente,0.579805
+stride_512_caliente,0.575296
+stride_1024_caliente,0.509178
+stride_4096_caliente,0.608270

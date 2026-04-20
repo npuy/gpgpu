@@ -1,0 +1,93 @@
+================================================================================
+EJERCICIO 1 - RESUMEN DE RESULTADOS
+Análisis de Localidad Espacial y Temporal en Memoria Caché
+================================================================================
+
+CONFIGURACIÓN:
+- Array: 100 MB (104,857,600 bytes)
+- Iteraciones: 5 (1 fría, 4 calientes)
+- Accesos: 100 millones por prueba
+
+================================================================================
+RESULTADOS PRINCIPALES
+================================================================================
+
+1. ACCESO SECUENCIAL VS ALEATORIO (Caché Caliente)
+   ------------------------------------------------
+   Secuencial:  0.0912 s
+   Aleatorio:   1.5453 s
+   Slowdown:    16.94x ← El aleatorio es ~17 veces más lento
+
+2. EFECTO DE CACHÉ FRÍA VS CALIENTE
+   ----------------------------------
+   Secuencial:
+     - Fría:     0.3515 s
+     - Caliente: 0.0912 s
+     - Mejora:   3.85x más rápido con caché caliente
+
+   Aleatorio:
+     - Fría:     1.4334 s
+     - Caliente: 1.5453 s
+     - Mejora:   0.93x (sin mejora, array > tamaño caché)
+
+3. ANÁLISIS DE STRIDES (Caché Caliente)
+   -------------------------------------
+   Stride    Tiempo(s)    Slowdown    Eficiencia
+   ------    ---------    --------    ----------
+   1         0.1519       1.67x       BUENA
+   16        0.2059       2.26x       BUENA
+   64        0.6289       6.89x       REGULAR    ← Tamaño línea caché
+   128       1.2774       14.00x      POBRE
+   256       1.6073       17.62x      POBRE
+   512       1.5638       17.14x      POBRE
+   1024      1.8803       20.61x      POBRE
+   4096      1.6870       18.49x      POBRE
+
+================================================================================
+CONCLUSIONES CLAVE
+================================================================================
+
+✓ TAMAÑO DE LÍNEA DE CACHÉ: 64 bytes
+  - Identificado por degradación entre stride 16 (bueno) y 64 (regular)
+
+✓ LOCALIDAD ESPACIAL ES CRÍTICA:
+  - Acceso secuencial: 16.94x más rápido que aleatorio
+  - Strides pequeños (≤16): mantienen buen rendimiento
+  - Strides grandes (≥128): destruyen localidad espacial
+
+✓ LOCALIDAD TEMPORAL:
+  - Solo efectiva cuando working set cabe en caché
+  - Secuencial mejora 3.85x con warming
+  - Aleatorio no mejora (array 100MB > caché L3 ~8-16MB)
+
+✓ PREFETCHING DE HARDWARE:
+  - Muy efectivo para patrones secuenciales
+  - Inefectivo para patrones aleatorios
+
+================================================================================
+RECOMENDACIONES PARA PROGRAMACIÓN
+================================================================================
+
+1. Organizar datos SECUENCIALMENTE en memoria
+2. Usar strides pequeños (≤ 64 bytes idealmente)
+3. Evitar indirecciones y punteros dispersos
+4. Bloquear algoritmos para que working set quepa en caché
+5. Alinear estructuras a 64 bytes cuando sea posible
+
+================================================================================
+ARCHIVOS GENERADOS
+================================================================================
+
+✓ ejercicio1_results.csv         - Resumen de tiempos
+✓ ejercicio1_detailed.csv        - Tiempos por iteración
+✓ ejercicio1_strides.csv         - Datos de stride detallados
+✓ INFORME_EJERCICIO1.md          - Informe completo con análisis
+✓ generate_plots_simple.py       - Script para generar gráficos
+
+Para generar gráficos (requiere matplotlib):
+  python3 -m venv venv
+  source venv/bin/activate
+  pip install matplotlib
+  python3 generate_plots_simple.py
+
+================================================================================
