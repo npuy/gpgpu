@@ -15,15 +15,28 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
 
 void write_file(const char *, int *, int);
 
+/**
+ * Configure una grilla de bloques de tama ̃no 32×32. Reserve un espacio en memoria compartida de
+ * tama ̃no igual al del bloque y utilice este espacio para evitar los accesos no-coalesced a la memoria
+ * global (es decir, realizar los accesos que ser ́ıan no-coalesced sobre este espacio en lugar de la memoria
+ * global). Compare el desempe ̃no del kernel con las versiones del pr ́actico anterior
+ */
 __global__ void traspuesta(int *matriz_origen, int *matriz_destino, int n)
 {
-    int row = threadIdx.y + (blockIdx.y * blockDim.y);
-    int col = threadIdx.x + (blockIdx.x * blockDim.x);
-    if (col < n && row < n)
-    {                                   // Asumiendo matriz cuadrada x ahora
-        int id_origen = row * n + col;  // Asi accedo coalesced a origen, siguiendo row-major order
-        int id_destino = col * n + row; // Pero esto ya no es coalesced
-        matriz_destino[id_destino] = matriz_origen[id_origen];
+    __shared__ int tile[33][32];
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    if (x < n && y < n)
+    {
+        tile[threadIdx.y][threadIdx.x] = matriz_origen[y * n + x];
+    }
+    __syncthreads();
+
+    x = blockIdx.y * blockDim.y + threadIdx.x; // intercambiamos x e y para escribir la transpuesta
+    y = blockIdx.x * blockDim.x + threadIdx.y;
+    if (x < n && y < n)
+    {
+        matriz_destino[y * n + x] = tile[threadIdx.x][threadIdx.y]; // escribimos la transpuesta desde el tile
     }
 }
 
