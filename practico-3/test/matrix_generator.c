@@ -2,9 +2,10 @@
 #include <stdlib.h>
 #include <time.h>
 
-// Configura el tamaño de la matriz y el rango de valores aquí
-#define N 2048      
-#define MAX_VALUE 100
+// Configura el tamaño de la matriz y el rango de valores aqui
+#define N 2048
+#define MIN_VALUE -10
+#define MAX_VALUE 10
 
 int main(void) {
     FILE *file = fopen("matrix.txt", "w");
@@ -15,18 +16,16 @@ int main(void) {
 
     srand((unsigned int)time(NULL));
 
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            int value = i;
-            fprintf(file, "%d", value);
-            if (j < N - 1) {
-                fprintf(file, " ");
-            }
+    for (int i = 0; i < N * N; i++) {
+        int value = MIN_VALUE + rand() % (MAX_VALUE - MIN_VALUE + 1);
+        fprintf(file, "%d", value);
+        if (i < N * N - 1) {
+            fprintf(file, " ");
         }
-        fprintf(file, "\n");
     }
+    fprintf(file, "\n");
 
     fclose(file);
-    printf("Matriz %dx%d generada en matrix.txt\n", N, N);
+    printf("Array de %d valores generado en matrix.txt\n", N * N);
     return EXIT_SUCCESS;
 }

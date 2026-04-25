@@ -23,7 +23,26 @@ void write_file(const char *, int *, int);
  */
 __global__ void traspuesta(int *matriz_origen, int *matriz_destino, int n)
 {
-    __shared__ int tile[33][32];
+    __shared__ int tile[32][32];
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    if (x < n && y < n)
+    {
+        tile[threadIdx.y][threadIdx.x] = matriz_origen[y * n + x];
+    }
+    __syncthreads();
+
+    x = blockIdx.y * blockDim.y + threadIdx.x; // intercambiamos x e y para escribir la transpuesta
+    y = blockIdx.x * blockDim.x + threadIdx.y;
+    if (x < n && y < n)
+    {
+        matriz_destino[y * n + x] = tile[threadIdx.x][threadIdx.y]; // escribimos la transpuesta desde el tile
+    }
+}
+
+__global__ void traspuesta_padding(int *matriz_origen, int *matriz_destino, int n)
+{
+    __shared__ int tile[32][33];
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
     if (x < n && y < n)
@@ -47,6 +66,7 @@ int main(int argc, char *argv[])
 
     int *d_entrada;
     int *d_traspuesta;
+    int *d_transpuesta_padding;
 
     unsigned int size;
     int n, bx, by;
@@ -104,6 +124,7 @@ int main(int argc, char *argv[])
     // asigno memoria en device
     cudaMalloc((void **)&d_entrada, size);
     cudaMalloc((void **)&d_traspuesta, size);
+    cudaMalloc((void **)&d_transpuesta_padding, size);
 
     // paso la data a device, a la memoria recien asignada
     cudaMemcpy(d_entrada, h_entrada, size, cudaMemcpyHostToDevice);
@@ -113,26 +134,21 @@ int main(int argc, char *argv[])
 
     dim3 grid_size((n + block_size.x - 1) / block_size.x, (n + block_size.y - 1) / block_size.y); // Esto es para que alcance a cubrir toda la matriz, aunque el bloque no divida exactamente a n
 
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-
-    cudaEventRecord(start);
-    traspuesta<<<grid_size, block_size>>>(d_entrada, d_traspuesta, n);
-    cudaEventRecord(stop);
-
-    cudaEventSynchronize(stop);
-    float milliseconds = 0;
-    cudaEventElapsedTime(&milliseconds, start, stop);
+    for (int i = 0; i < 10; i++)
+        traspuesta<<<grid_size, block_size>>>(d_entrada, d_traspuesta, n);
+    for (int i = 0; i < 10; i++)
+        traspuesta_padding<<<grid_size, block_size>>>(d_entrada, d_transpuesta_padding, n);
 
     cudaMemcpy(h_traspuesta, d_traspuesta, size, cudaMemcpyDeviceToHost);
-
-    printf("Kernel execution time: %f ms\n", milliseconds);
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
-
     // escribo la matriz resultante en el archivo de salida en el mismo formato que el de entrada, pero sin la primera linea con los parametros
     write_file("output1.txt", h_traspuesta, n);
+
+    cudaMemcpy(h_traspuesta, d_transpuesta_padding, size, cudaMemcpyDeviceToHost);
+    write_file("output1_padding.txt", h_traspuesta, n);
+
+    cudaFree(d_entrada);
+    cudaFree(d_traspuesta);
+    cudaFree(d_transpuesta_padding);
 
     free(h_entrada);
     free(h_traspuesta);
