@@ -17,6 +17,11 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
     }
 }
 
+void write_file(const char *path, int *output, int length);
+void parse_input(int argc, char *argv[], int *n, int *size, const char **output_path);
+int *generate_array(int n);
+void print_timing_stats(const std::vector<float> &tiempos);
+
 /*
 En este codigo hacemos la reduccion usando la mask 0xFFFFFFFF. Es la primer version que se nos ocurrio.
 
@@ -84,39 +89,16 @@ __global__ void reduccion_mem(int *array_in, int *array_out, int n)
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    const char *output_path = NULL;
+    int N;
+    int size;
 
-    // int N = 8192; // 2^13 chico
-    int N = 4194304; // 2^20 grande
-    // int N = 268435456; // 2^28 enorme
-    int size = N * sizeof(int);
+    parse_input(argc, argv, &N, &size, &output_path);
 
-    int *h_in = (int *)malloc(size);
+    int *h_in = generate_array(N);
     int *h_out = (int *)malloc(size);
-
-    // mezcla de positivos y negativos
-    /*
-    for (int i = 0; i < N; i++) {
-        if (i % 5 == 0)
-            h_in[i] = -i;
-        else
-            h_in[i] = i;
-    }
-    */
-    // arreglo aleatorio de enteros entre -100 y 100
-    for (int i = 0; i < N; i++)
-    {
-        h_in[i] = (rand() % 201) - 100;
-    }
-
-    /*
-    printf("Entrada:\n");
-    for (int i = 0; i < N; i++) {
-        printf("%d ", h_in[i]);
-    }
-    printf("\n\n");
-    */
 
     int *d_in, *d_out;
 
@@ -144,22 +126,10 @@ int main()
         cudaEventElapsedTime(&tiempos[i], start, stop);
     }
 
-    float suma = std::accumulate(tiempos.begin(), tiempos.end(), 0.0f);
-    float promedio = suma / repeticiones;
-    float varianza = 0.0;
-    for (float t : tiempos)
-        varianza += pow(t - promedio, 2);
-    float desv_est = sqrt(varianza / repeticiones);
+    print_timing_stats(tiempos);
 
     cudaMemcpy(h_out, d_out, size, cudaMemcpyDeviceToHost);
-
-    /*
-    printf("Salida:\n");
-    for (int i = 0; i < N; i++) {
-        printf("%d ", h_out[i]);
-    }
-    printf("\n\n");
-    */
+    write_file(output_path, h_out, N);
 
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
@@ -169,4 +139,67 @@ int main()
     free(h_out);
 
     return 0;
+}
+
+void parse_input(int argc, char *argv[], int *n, int *size, const char **output_path)
+{
+    if (argc < 3)
+    {
+        fprintf(stderr, "Uso: %s <n> <output_path>\n", argv[0]);
+        exit(1);
+    }
+
+    *n = atoi(argv[1]);
+    *output_path = argv[2];
+    *size = (*n) * sizeof(int);
+
+    if (*n <= 0)
+    {
+        fprintf(stderr, "Error: n debe ser un entero positivo\n");
+        exit(1);
+    }
+}
+
+int *generate_array(int n)
+{
+    int *array = (int *)malloc(n * sizeof(int));
+
+    for (int i = 0; i < n; i++)
+    {
+        array[i] = (rand() % 201) - 100;
+    }
+
+    return array;
+}
+
+void print_timing_stats(const std::vector<float> &tiempos)
+{
+    float suma = std::accumulate(tiempos.begin(), tiempos.end(), 0.0f);
+    float promedio = suma / tiempos.size();
+    float varianza = 0.0;
+    for (float t : tiempos)
+    {
+        varianza += pow(t - promedio, 2);
+    }
+    float desv_est = sqrt(varianza / tiempos.size());
+
+    printf("Promedio (10 iteraciones): %f ms\n", promedio);
+    printf("Desviación estándar: %f ms\n", desv_est);
+}
+
+void write_file(const char *path, int *output, int length)
+{
+    FILE *f = fopen(path, "w");
+    if (f == NULL)
+    {
+        fprintf(stderr, "Error: Could not create %s file\n", path);
+        exit(1);
+    }
+
+    for (int i = 0; i < length; i++)
+    {
+        fprintf(f, "%d ", output[i]);
+    }
+
+    fclose(f);
 }
