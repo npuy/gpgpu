@@ -153,6 +153,7 @@ int *generate_array(int n)
 {
     int *array = (int *)malloc(n * sizeof(int));
 
+    srand(23);
     for (int i = 0; i < n; i++)
     {
         array[i] = (rand() % 201) - 100;

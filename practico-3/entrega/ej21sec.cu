@@ -149,12 +149,10 @@ int *generate_array(int n)
 {
     int *array = (int *)malloc(n * sizeof(int));
 
+    srand(23);
     for (int i = 0; i < n; i++)
     {
-        if (i % 5 == 0)
-            array[i] = -i;
-        else
-            array[i] = i;
+        array[i] = (rand() % 201) - 100;
     }
 
     return array;
