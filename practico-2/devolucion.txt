@@ -1,0 +1,11 @@
+Ej1: Ok
+
+Ej2: La función hace lo que se pide pero se ejecutan muchos hilos innecesarios (uno por no-cero de 
+la matriz) que no van a trabajar proque solamente haran cosas los que quedan adentro del cuadrado. 
+
+Ej3: Implementación correcta. En el informe no se explicita la plataforma de ejecución. 
+El razonamiento de los problemas encontrados en el acceso a memoria es correcto pero no así el 
+tamaño propuesto. El objetivo del ejercicio era que se evaluara como cambiar el tamaño de bloque 
+para mejorar el acceso a memoria y analizar el impacto en el tiempo de ejecución. Los cambios no 
+modifican el acceso a memoria ya que la dimensión X sigue siendo 32 por lo que todo el warp lee una 
+fila y escribe una columna.

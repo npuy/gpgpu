@@ -1,0 +1,26 @@
+Ej1: El concepto de "calentar la cache" no aplica al problema planteado ya que la idea es recorrer 
+una vez el arreglo con cada estrategia y comparar los resultados (mejor aprovechamiento de los 
+datos en cache y prefetch en la recorrida secuencial. De los resultados que obtienen (una 
+diferencia de casi un orden de magnitud entre la primera ejecución y las demas en el secuencial 
+parece que están haciendo varias iteraciones en lugar de varias repeticiones del mismo experimento 
+y podría ser que a partir de la segunda ya se tengan datos en cache. De todas formas los resultados 
+a primera vista son extraños en la primera iteración. En términos generales la fundamentación de 
+los resultados está bien en general. La experimentación que agregan es una idea interesante pero no 
+profundizan ¿por qué el de 16 da mejor que el stride 1? ¿es solo una ejecución o un promedio de 
+ejecuciones? En los saltos siguientes encuentran que xej 1024 es mejor que tanto 528 como 2048 ¿por 
+qué puede ser? Se dice que el tamaño de línea de cache es 64 pero en la plataforma reportada Apple 
+Silicon M2 el tamaño de línea es 128
+
+Ej2:
+Parte 1: La idea del análisis teórico era que se calculara el mejor tamaño de bloque teóricamente, 
+de las cuentas que presentan el resultado óptimo es del entorno de 70 pero lo que tomaron como 
+teórico es el valor experimental que encontraron más cercano. Los resultados experimentales son 
+raros teniendo en cuenta que el bloque de 8x8 no usa entera la línea de cache.
+Parte 2: Correcto en general pero si bien teorizan sobre una posible solución no se evalúa en la 
+práctica
+Parte 3: Está bien el análisis y el razonamiento
+
+Informe: Está bien el informe en general y la presentación de figuras, tabla y estructura. Para 
+futuros informes tratar de reducir la sintaxis gpt-esc con muchos punteos genéricos que no dicen 
+gran cosa e intentar desarrollar la argumentación textualmente y siguiendo los resultados 
+experimentales
