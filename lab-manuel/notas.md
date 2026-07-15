@@ -1,4 +1,0 @@
-- Verificar correctitud
-- Paralelizar calculo de norma y xxt
-- Calcular el tiempo total del programa, no solo el tiempo de cada kernel
-  - Afecta tambien el tiempo de pasaje de memoria a memoria de gpu
